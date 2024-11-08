@@ -21,10 +21,14 @@ public class Stock {
         return promotionStock;
     }
 
+    public HashMap<Products, Integer> getNoPromotionStock() {
+        return noPromotionStock;
+    }
+
     public HashMap<Products, Integer> initializePromotionStock(){
         HashMap<Products,Integer> promotionInventory = new HashMap<>();
         try{BufferedReader bufferedReader = new BufferedReader(new FileReader("src/main/resources/products.md"));
-            String line = null;
+            String line;
             while((line = bufferedReader.readLine()) != null){
                 String[] split = line.split(",");
                 if(split[0].equals("name") || split[2].equals("quantity")) continue;
@@ -41,7 +45,7 @@ public class Stock {
     public HashMap<Products, Integer> initializeNoPromotionStock(){
         HashMap<Products, Integer> noPromotionInventory = new HashMap<>();
         try{BufferedReader bufferedReader = new BufferedReader(new FileReader("src/main/resources/products.md"));
-            String line = null;
+            String line;
             while((line = bufferedReader.readLine()) != null){
                 String[] split = line.split(",");
                 if(split[0].equals("name") || split[2].equals("quantity")) continue;
@@ -62,16 +66,19 @@ public class Stock {
 
         if (Products.isPromotionProduct(productName)) {
             if(isZeroQuantity(promotionStock,product)) return;
-            promotionStock.put(product, promotionStock.get(product) - 1);
+            promotionStock.put(product, promotionStock.get(product) - quantity);
             return;
         }
 
         if(isZeroQuantity(noPromotionStock,product)) return;
-        noPromotionStock.put(product, noPromotionStock.get(product) - 1);
+        noPromotionStock.put(product, noPromotionStock.get(product) - quantity);
     }
 
     private boolean isZeroQuantity(HashMap<Products, Integer> stock, Products products){
-        return stock.get(products) == 0;
+        return stock.get(products) == 0 || stock.get(products) == null;
+    }
+    public boolean isPromotionQuantityEnough(Products products){
+        return !isZeroQuantity(promotionStock,products);
     }
 
 }
