@@ -9,35 +9,55 @@ import java.util.HashMap;
 
 public class Stock {
 
-    HashMap<Products, Integer> promotionStock = new HashMap<>();
-    HashMap<Products, Integer> noPromotionStock = new HashMap<>();
+    private HashMap<Products, Integer> promotionStock;
+    private HashMap<Products, Integer> noPromotionStock;
+
+    public Stock() {
+        this.promotionStock = initializePromotionStock();
+        this.noPromotionStock = initializeNoPromotionStock();
+    }
 
     public HashMap<Products, Integer> getPromotionStock() {
         return promotionStock;
     }
 
-    public void findQuantity(){
+    public HashMap<Products, Integer> initializePromotionStock(){
+        HashMap<Products,Integer> promotionInventory = new HashMap<>();
         try{BufferedReader bufferedReader = new BufferedReader(new FileReader("src/main/resources/products.md"));
             String line = null;
             while((line = bufferedReader.readLine()) != null){
                 String[] split = line.split(",");
                 if(split[0].equals("name") || split[2].equals("quantity")) continue;
-                if(split[3].equals("null")){
-                    noPromotionStock.put(Products.findProduct(split[0]), Integer.parseInt(split[2]));
-                    continue;
-                }
-                promotionStock.put(Products.findProduct(split[0]), Integer.parseInt(split[2]));
+                promotionInventory.put(Products.findProduct(split[0]), Integer.parseInt(split[2]));
             }
         }catch (FileNotFoundException e){
             System.out.println(e.getMessage());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return promotionInventory;
     }
 
+    public HashMap<Products, Integer> initializeNoPromotionStock(){
+        HashMap<Products, Integer> noPromotionInventory = new HashMap<>();
+        try{BufferedReader bufferedReader = new BufferedReader(new FileReader("src/main/resources/products.md"));
+            String line = null;
+            while((line = bufferedReader.readLine()) != null){
+                String[] split = line.split(",");
+                if(split[0].equals("name") || split[2].equals("quantity")) continue;
+                if(split[3].equals("null")){
+                    noPromotionInventory.put(Products.findProduct(split[0]), Integer.parseInt(split[2]));
+                }
+            }
+        }catch (FileNotFoundException e){
+            System.out.println(e.getMessage());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return noPromotionInventory;
+    }
 
     public void minusQuantity(String productName, int quantity){
-        findQuantity();
         Products product = Products.findProduct(productName);
 
         if (Products.isPromotionProduct(productName)) {
