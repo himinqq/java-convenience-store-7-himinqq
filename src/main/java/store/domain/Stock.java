@@ -61,24 +61,25 @@ public class Stock {
         return noPromotionInventory;
     }
 
-    public void minusQuantity(String productName, int quantity){
-        Products product = Products.findProduct(productName);
-
-        if (Products.isPromotionProduct(productName)) {
-            if(isZeroQuantity(promotionStock,product)) return;
-            promotionStock.put(product, promotionStock.get(product) - quantity);
+    public void minusQuantity(Products products, int quantity){
+        if(Products.isPromotionProduct(products.getName())){
+            decreasePromotionStock(products,quantity);
             return;
         }
-
-        if(isZeroQuantity(noPromotionStock,product)) return;
-        noPromotionStock.put(product, noPromotionStock.get(product) - quantity);
+        decreaseNoPromotionStock(products,quantity);
+    }
+    public void decreasePromotionStock(Products product, int quantity){
+        if(isNotZeroQuantity(promotionStock,product)){
+            promotionStock.put(product, promotionStock.get(product) - quantity);
+        }
+    }
+    public void decreaseNoPromotionStock(Products product, int quantity){
+        if(isNotZeroQuantity(noPromotionStock,product)){
+            noPromotionStock.put(product, noPromotionStock.get(product) - quantity);
+        }
     }
 
-    private boolean isZeroQuantity(HashMap<Products, Integer> stock, Products products){
-        return stock.get(products) == 0 || stock.get(products) == null;
+    private boolean isNotZeroQuantity(HashMap<Products, Integer> stock, Products products){
+        return stock.get(products) != 0 || stock.get(products) != null;
     }
-    public boolean isPromotionQuantityEnough(Products products){
-        return !isZeroQuantity(promotionStock,products);
-    }
-
 }

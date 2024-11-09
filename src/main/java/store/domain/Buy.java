@@ -13,25 +13,31 @@ public class Buy {
     private final Map<Products, Integer> item = new HashMap<>();
     private final Stock stock;
 
-    public Map<Products, Integer> getItem() {
-        return item;
-    }
-
     public Buy(Stock stock) {
         this.stock = stock;
     }
 
-    public void buyProducts(String clientInput) {
+    public Map<Products, Integer> getItem() {
+        return item;
+    }
+
+    public void buyProductsByClientInput(String clientInput) {
         addBuyItem(findProducts(clientInput), findQuantity(clientInput));
         item.forEach(stock::minusQuantity);
     }
 
-    private void addBuyItem(List<Products> products, List<Integer> quantity){
-        IntStream.range(0,products.size())
-                .forEach(i->item.put(products.get(i), item.getOrDefault(item.get(products.get(i)),0) +quantity.get(i)));
+    public void getOneFree(Products products) {
+        item.put(products, item.get(products) + 1);
+        stock.minusQuantity(products, 1);
     }
 
-    public List<Products> findProducts(String clientInput){
+    private void addBuyItem(List<Products> products, List<Integer> quantity) {
+        IntStream.range(0, products.size())
+                .forEach(i -> item.put(products.get(i),
+                        item.getOrDefault(item.get(products.get(i)), 0) + quantity.get(i)));
+    }
+
+    public List<Products> findProducts(String clientInput) {
         List<Products> products = new ArrayList<>();
         Pattern productNamePattern = Pattern.compile("([가-힣]+)");
         Matcher productNamematcher = productNamePattern.matcher(clientInput);
@@ -42,21 +48,22 @@ public class Buy {
         return products;
     }
 
-    private List<Integer> findQuantity(String clientInput){
+    private List<Integer> findQuantity(String clientInput) {
         List<Integer> quantity = new ArrayList<>();
         Pattern quantityPattern = Pattern.compile("([0-9]+)");
         Matcher quantityMatcher = quantityPattern.matcher(clientInput);
 
-        while (quantityMatcher.find()){
+        while (quantityMatcher.find()) {
             String number = quantityMatcher.group();
             quantity.add(validateIsNumeric(number));
         }
         return quantity;
     }
-    private int validateIsNumeric(String number){
+
+    private int validateIsNumeric(String number) {
         try {
             return Integer.parseInt(number);
-        } catch (NumberFormatException e){
+        } catch (NumberFormatException e) {
             throw new IllegalArgumentException(ErrorMessage.NOT_NUMERIC_ERROR.getMessage());
         }
     }
