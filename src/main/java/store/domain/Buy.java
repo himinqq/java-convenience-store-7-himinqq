@@ -10,35 +10,39 @@ import java.util.stream.IntStream;
 import store.ErrorMessage;
 
 public class Buy {
-    private final String clientInput;
-    private final Map<String, Integer> item = new HashMap<>();
+    private final Map<Products, Integer> item = new HashMap<>();
+    private final Stock stock;
 
-    public Map<String, Integer> getItem() {
+    public Map<Products, Integer> getItem() {
         return item;
     }
 
-    public Buy(String clientInput) {
-        this.clientInput = clientInput;
-        initialize(findProducts(),findQuantity());
+    public Buy(Stock stock) {
+        this.stock = stock;
     }
 
-    private void initialize(List<String> products, List<Integer> quantity){
+    public void buyProducts(String clientInput) {
+        addBuyItem(findProducts(clientInput), findQuantity(clientInput));
+        item.forEach(stock::minusQuantity);
+    }
+
+    private void addBuyItem(List<Products> products, List<Integer> quantity){
         IntStream.range(0,products.size())
-                .forEach(i->item.put(products.get(i),quantity.get(i)));
+                .forEach(i->item.put(products.get(i), item.getOrDefault(item.get(products.get(i)),0) +quantity.get(i)));
     }
 
-    public List<String> findProducts(){
-        List<String> productNames = new ArrayList<>();
+    public List<Products> findProducts(String clientInput){
+        List<Products> products = new ArrayList<>();
         Pattern productNamePattern = Pattern.compile("([가-힣]+)");
         Matcher productNamematcher = productNamePattern.matcher(clientInput);
 
         while (productNamematcher.find()) {
-            productNames.add(productNamematcher.group());
+            products.add(Products.findProduct(productNamematcher.group()));
         }
-        return productNames;
+        return products;
     }
 
-    private List<Integer> findQuantity(){
+    private List<Integer> findQuantity(String clientInput){
         List<Integer> quantity = new ArrayList<>();
         Pattern quantityPattern = Pattern.compile("([0-9]+)");
         Matcher quantityMatcher = quantityPattern.matcher(clientInput);

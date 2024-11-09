@@ -21,4 +21,8 @@ public class Payment {
         IntStream.range(0, quantity)
                 .forEach(i -> add(products.getPrice()));
     }
+    public void applyBuyNGetOneFree(Products products, int quantity, PromotionDiscount promotionDiscount) {
+        subtract(promotionDiscount.discountPrice(products, quantity));
+    }
+
 }
