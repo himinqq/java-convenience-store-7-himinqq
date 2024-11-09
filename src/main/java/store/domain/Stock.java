@@ -32,7 +32,9 @@ public class Stock {
             while((line = bufferedReader.readLine()) != null){
                 String[] split = line.split(",");
                 if(split[0].equals("name") || split[2].equals("quantity")) continue;
-                promotionInventory.put(Products.findProduct(split[0]), Integer.parseInt(split[2]));
+                if(!split[3].equals("null")){
+                    promotionInventory.put(Products.findProduct(split[0]), Integer.parseInt(split[2]));
+                }
             }
         }catch (FileNotFoundException e){
             System.out.println(e.getMessage());
