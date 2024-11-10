@@ -8,6 +8,7 @@ public class InputView {
     private static final String notifyPromotionMessage = "현재 %s 은(는) 1개를 무료로 더 받을 수 있습니다. 추가하시겠습니까? (Y/N)";
     private static final String notifyOutOfStockNoPromotionMessage = "현재 %s %d개는 프로모션 할인이 적용되지 않습니다. 그래도 구매하시겠습니까? (Y/N)";
     private static final String membershipApplyMessage = "멤버십 할인을 받으시겠습니까? (Y/N)";
+    private static final String ASK_EXTRA_PURCHASE_MESSAGE = "감사합니다. 구매하고 싶은 다른 상품이 있나요? (Y/N)";
 
     private final Supplier<String> reader;
 
@@ -33,6 +34,13 @@ public class InputView {
     }
     public boolean requestApplyMembershipDiscount(){
         System.out.println(membershipApplyMessage);
+        String answer = reader.get();
+        validateYesOrNoAnswer(answer);
+        return answer.equals("Y");
+    }
+
+    public boolean requestExtraPurchase(){
+        System.out.println(ASK_EXTRA_PURCHASE_MESSAGE);
         String answer = reader.get();
         validateYesOrNoAnswer(answer);
         return answer.equals("Y");

@@ -20,10 +20,14 @@ class StockTest {
         HashMap<Products, Integer> promotionStock = stock.getPromotionStock();
 
         Integer before = promotionStock.get(Products.CIDER);
-        Buy buy = new Buy(stock);
+
         List<Products> products = List.of(Products.CIDER, Products.POTATO_CHIP);
         List<Integer> quantity = List.of(2, 1);
-        buy.buyItemByClientInput(products,quantity);
+        HashMap<Products, Integer> item = new HashMap<>();
+        for(int i =0; i<quantity.size(); i++){
+            item.put(products.get(i), quantity.get(i));
+        }
+        Buy buy = new Buy(stock, item);
         buy.getItem().entrySet().forEach(i->{
             int remain = stock.decreasePromotionStockAndReturnRemaining(i.getKey(), i.getValue());
             if(remain != 0) stock.decreaseQuantityAtNoPromotionStock(i.getKey(),i.getValue());
