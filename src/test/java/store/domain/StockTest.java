@@ -1,24 +1,17 @@
 package store.domain;
 
 import java.util.HashMap;
-import java.util.Map.Entry;
+import java.util.List;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import store.view.OutputView;
 
 class StockTest {
     @Test
     void 재고_테스트(){
         Stock stock = new Stock();
-        //stock.minusQuantity("콜라",1);
+        HashMap<Products, Integer> promotionStock = stock.getPromotionStock();
+        Assertions.assertThat(promotionStock.get(Products.CIDER)).isEqualTo(8);
 
-//        for(Entry<Products,Integer>entry : stock.getPromotionStock().entrySet()){
-//            if(entry.getKey().equals(Products.COKE))
-//            System.out.println(entry.getKey() + " " + entry.getValue());
-//        }
-
-        OutputView outputView = new OutputView();
-        outputView.printStock(stock);
 
     }
     @Test
@@ -27,11 +20,28 @@ class StockTest {
         HashMap<Products, Integer> promotionStock = stock.getPromotionStock();
 
         Integer before = promotionStock.get(Products.CIDER);
-        Buy buy = new Buy("[사이다-2],[감자칩-1]",stock);
+        Buy buy = new Buy(stock);
+        List<Products> products = List.of(Products.CIDER, Products.POTATO_CHIP);
+        List<Integer> quantity = List.of(2, 1);
+        buy.buyItemByClientInput(products,quantity);
+        buy.getItem().entrySet().forEach(i->{
+            int remain = stock.decreasePromotionStockAndReturnRemaining(i.getKey(), i.getValue());
+            if(remain != 0) stock.decreaseQuantityAtNoPromotionStock(i.getKey(),i.getValue());
+        });
 
         Integer after = promotionStock.get(Products.CIDER);
 
         Assertions.assertThat(after).isEqualTo(before - 2);
+    }
+
+    @Test
+    void 수량을_초과하면_에러가발생한다(){
+        Stock stock = new Stock();
+
+        Assertions.assertThatThrownBy(()->
+                stock.checkExceedQuantity(stock.getPromotionStock(), Products.COKE, 12))
+                .isInstanceOf(IllegalArgumentException.class);
+
     }
 
 }

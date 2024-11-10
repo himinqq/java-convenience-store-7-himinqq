@@ -11,7 +11,7 @@ class ProductsTest {
         Stock stock = new Stock();
 
         Integer before = stock.getPromotionStock().get(Products.COKE);
-        stock.minusQuantity("콜라", 1);
+        stock.decreasePromotionStock(Products.COKE);
         Integer after = stock.getPromotionStock().get(Products.COKE);
 
         Assertions.assertThat(before - after).isEqualTo(1);

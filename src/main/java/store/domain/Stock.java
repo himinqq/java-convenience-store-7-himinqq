@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import store.ErrorMessage;
 
 
 public class Stock {
@@ -63,25 +64,34 @@ public class Stock {
         return noPromotionInventory;
     }
 
-    public void minusQuantity(Products products, int quantity){
-        if(Products.isPromotionProduct(products.getName())){
-            decreasePromotionStock(products,quantity);
-            return;
-        }
-        decreaseNoPromotionStock(products,quantity);
-    }
-    public void decreasePromotionStock(Products product, int quantity){
-        if(isNotZeroQuantity(promotionStock,product)){
-            promotionStock.put(product, promotionStock.get(product) - quantity);
+    public void decreaseQuantityAtNoPromotionStock(Products products, int quantity){
+        for(int i =0; i<quantity; i++){
+            if(isZeroQuantity(noPromotionStock,products)) break;
+            decreaseNoPromotionStock(products);
         }
     }
-    public void decreaseNoPromotionStock(Products product, int quantity){
-        if(isNotZeroQuantity(noPromotionStock,product)){
-            noPromotionStock.put(product, noPromotionStock.get(product) - quantity);
+    public int decreasePromotionStockAndReturnRemaining(Products products, int quantity){
+        int remain = quantity;
+        for(int i =0; i<quantity; i++){
+            if(isZeroQuantity(promotionStock,products)) break;
+            decreasePromotionStock(products);
+            remain--;
         }
+        return remain;
+    }
+    public void decreasePromotionStock(Products product){
+        promotionStock.put(product, promotionStock.get(product) - 1);
+    }
+    public void decreaseNoPromotionStock(Products product){
+        noPromotionStock.put(product, noPromotionStock.get(product) - 1);
     }
 
-    private boolean isNotZeroQuantity(HashMap<Products, Integer> stock, Products products){
-        return stock.get(products) != 0 || stock.get(products) != null;
+    private boolean isZeroQuantity(HashMap<Products, Integer> stock, Products products){
+        return stock.get(products) == 0 || stock.get(products) == null;
+    }
+    public void checkExceedQuantity(HashMap<Products, Integer> stock,Products products, int quantity){
+        if(stock.get(products) < quantity){
+            throw new IllegalArgumentException(ErrorMessage.EXCEED_QUANTITY_ERROR.getMessage());
+        }
     }
 }

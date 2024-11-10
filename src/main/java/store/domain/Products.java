@@ -5,7 +5,7 @@ import java.util.Arrays;
 public enum Products {
     COKE("콜라", 1000,Promotions.SPARKLE_TWO_PULUS_ONE),
     CIDER("사이다", 1000,Promotions.SPARKLE_TWO_PULUS_ONE),
-    ORANGE_JUICE("오렌지주스", 1000,Promotions.MD_RECOMMEND),
+    ORANGE_JUICE("오렌지주스", 1800,Promotions.MD_RECOMMEND),
     SPARKLING_WATER("탄산수", 1200,Promotions.SPARKLE_TWO_PULUS_ONE),
     WATER("물", 500,Promotions.NO_PROMOTION),
     VITAMIN_WATER("비타민워터", 1500,Promotions.NO_PROMOTION),
@@ -25,6 +25,10 @@ public enum Products {
         this.name = name;
         this.price = price;
         this.promotions = promotions;
+    }
+
+    public int getPrice() {
+        return price;
     }
 
     public Promotions getPromotions() {

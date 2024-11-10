@@ -1,19 +1,17 @@
 package store.domain;
 
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.IntStream;
 
 public class Payment {
     private int price = 0;
     private int promotionPrice = 0;
+    private int membershipPrice = 0;
     private final PromotionDiscountPolicy promotionDiscountPolicy;
 
     public Payment(PromotionDiscountPolicy promotionDiscountPolicy) {
         this.promotionDiscountPolicy = promotionDiscountPolicy;
-    }
-
-    public int getPromotionPrice() {
-        return promotionPrice;
     }
 
     public int getPrice() {
@@ -37,22 +35,6 @@ public class Payment {
                 .forEach(i -> addPrice(products.getPrice()));
     }
 
-    public void applyPromotion(Buy buy, Products product, Integer quantity, boolean extraQuantityAnswer) {
-        if (promotionDiscountPolicy.checkPromotionCondition(product, quantity)) {
-            applyBuyNGetOneFreeDiscount(product, quantity);
-            applyPromotionForExtraQuantity(buy, extraQuantityAnswer, product, quantity);
-        }
-    }
-
-    private void applyPromotionForExtraQuantity(Buy buy, boolean extraQuantityAnswer, Products product,
-                                                Integer quantity) {
-        if (promotionDiscountPolicy.needExtraQuantityForPromotion(product, quantity)) {
-            if (extraQuantityAnswer) {
-                buy.getOneFree(product);
-            }
-        }
-    }
-
     public void applyBuyNGetOneFreeDiscount(Products products, int quantity) {
         if (promotionDiscountPolicy.requiredQuantity(products) != quantity) {
             subtractPrice(products.getPrice() * promotionDiscountPolicy.calculateDiscountAmount(products, quantity));
@@ -60,5 +42,14 @@ public class Payment {
                     products.getPrice() * promotionDiscountPolicy.calculateDiscountAmount(products, quantity));
         }
     }
+
+    public void cancelPayment(Products products, int quantity){
+        subtractPrice(products.getPrice()*quantity);
+    }
+
+    public List<Integer> integratePriceForReceipt(){
+        return new ArrayList<>(List.of(promotionPrice,membershipPrice,price));
+    }
+
 
 }

@@ -5,11 +5,6 @@ import java.time.LocalDateTime;
 
 public class PromotionDiscountPolicy {
 
-    public enum PromotionAction {
-        GIVE_ONE_EXTRA(),
-        APPLY_DISCOUNT()
-    }
-
     public boolean isPromotionValidate(Products products, LocalDateTime now) {
         Promotions promotions = products.getPromotions();
         return now.isAfter(promotions.getStart().atStartOfDay())
@@ -21,7 +16,8 @@ public class PromotionDiscountPolicy {
     }
 
     public boolean checkPromotionCondition(Products products, int quantity) {
-        return isPromotionValidate(products, DateTimes.now()) && isSatisfyRequiredQuantity(products, quantity);
+        return Products.isPromotionProduct(products.getName()) && isPromotionValidate(products, DateTimes.now())
+                && isSatisfyRequiredQuantity(products, quantity);
     }
 
     public int requiredQuantity(Products products) {
@@ -29,7 +25,7 @@ public class PromotionDiscountPolicy {
     }
 
     public boolean needExtraQuantityForPromotion(Products products, int quantity) {
-        return requiredQuantity(products) % quantity == requiredQuantity(products)
+        return quantity % (requiredQuantity(products)+1) == requiredQuantity(products)
                 || requiredQuantity(products) == quantity;
     }
 
