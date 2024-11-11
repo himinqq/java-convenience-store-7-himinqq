@@ -16,7 +16,7 @@ public class OutputView {
     private final String BUY_ITEM_MESSAGE = "%s\t\t%d \t%,d";
     private final String FREE_ITEM_MESSAGE = "%s\t\t%d";
     private final String TOTAL_PRICE_MESSAGE = "총구매액\t\t%d\t%,d\n";
-    private final String MEMBERSHIP_DISCOUNT_MESSAGE = "멤버십할인\t\t\t-%d\n";
+    private final String MEMBERSHIP_DISCOUNT_MESSAGE = "멤버십할인\t\t\t-%,d\n";
     private final String PROMOTION_DISCOUNT_MESSAGE = "행사할인\t\t\t-%,d\n";
 
     private final String MUST_PAYMENT = "내실돈\t\t\t %,d";

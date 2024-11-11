@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import store.ErrorMessage;
 
 
@@ -70,33 +71,8 @@ public class Stock {
         return noPromotionInventory;
     }
 
-    public void decreaseQuantityAtNoPromotionStock(Products products, int quantity) {
-        for (int i = 0; i < quantity; i++) {
-            if (isZeroQuantity(noPromotionStock, products)) {
-                break;
-            }
-            decreaseNoPromotionStock(products);
-        }
-    }
-
-    public int decreasePromotionStockAndReturnRemaining(Products products, int quantity) {
-        int remain = quantity;
-        for (int i = 0; i < quantity; i++) {
-            if (isZeroQuantity(promotionStock, products)) {
-                break;
-            }
-            decreasePromotionStock(products);
-            remain--;
-        }
-        return remain;
-    }
-
     public void decreasePromotionStock(Products product) {
         promotionStock.put(product, promotionStock.get(product) - 1);
-    }
-
-    public void decreaseNoPromotionStock(Products product) {
-        noPromotionStock.put(product, noPromotionStock.get(product) - 1);
     }
 
     private boolean isZeroQuantity(HashMap<Products, Integer> stock, Products products) {
@@ -108,4 +84,39 @@ public class Stock {
             throw new IllegalArgumentException(ErrorMessage.EXCEED_QUANTITY_ERROR.getMessage());
         }
     }
+
+    public void decreaseStockByQuantity(HashMap<Products, Integer> stock, Products products, int quantity){
+        stock.put(products, stock.get(products) - quantity);
+    }
+
+    public void decreaseStock(Map<Products, Integer> item){
+        item.entrySet().forEach(i->{
+            Products products = i.getKey();
+            Integer quantity = i.getValue();
+            if(Products.isPromotionProduct(products.getName())){
+                validateExceedQuantity(products,quantity);
+                decreaseStockByQuantity(promotionStock,products,quantity);
+                return;
+            }
+            decreaseStockByQuantity(noPromotionStock,products,quantity);
+        });
+    }
+
+    public void validateExceedQuantity(Products products, int quantity) {
+        Integer promotionStock = getPromotionStock().get(products);
+        Integer noPromotionStock = getNoPromotionStock().get(products);
+
+        if (Products.isPromotionProduct(products.getName()) && getPromotionStock().get(products) < quantity) {
+            if (promotionStock + noPromotionStock < quantity) {
+                throw new IllegalArgumentException(ErrorMessage.EXCEED_QUANTITY_ERROR.getMessage());
+            }
+        }
+        if (!Products.isPromotionProduct(products.getName())) {
+            if (noPromotionStock < quantity) {
+                throw new IllegalArgumentException(ErrorMessage.EXCEED_QUANTITY_ERROR.getMessage());
+            }
+        }
+    }
+
+
 }

@@ -27,6 +27,10 @@ public class Buy {
         stock.decreasePromotionStock(products);
     }
 
+    public void changeFreeItem(Products products, int quantity){
+        freeItem.put(products, quantity);
+    }
+
     public void addDisCountItem(Products products,int quantity){
         freeItem.put(products, freeItem.getOrDefault(products,0) + quantity);
     }

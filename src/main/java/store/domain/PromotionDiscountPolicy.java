@@ -34,7 +34,7 @@ public class PromotionDiscountPolicy {
     }
 
     public int calculateDiscountQuantity(Products products, int stock) {
-        return (stock / discountUnit(products)) * discountUnit(products);
+        return calculateDiscountCount(products,stock) * discountUnit(products);
     }
 
 

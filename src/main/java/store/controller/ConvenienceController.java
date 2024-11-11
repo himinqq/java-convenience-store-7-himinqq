@@ -30,56 +30,31 @@ public class ConvenienceController {
     }
 
     public void start() {
-        outputView.printWelcome();
         Stock stock = new Stock();
-        outputView.printStock(stock);
         PromotionDiscountPolicy promotionDiscountPolicy = new PromotionDiscountPolicy();
-        Payment payment = new Payment(promotionDiscountPolicy);
 
-        Buy buy = processPurchaseItems(stock, payment);
+        boolean wantToExtraPurchase = true;
 
-        boolean wantToExtraPurchase;
+        while (wantToExtraPurchase) {
+            outputView.printWelcome();
+            outputView.printStock(stock);
+            Payment payment = new Payment(promotionDiscountPolicy);
+            Buy buy = processPurchaseItems(stock, payment);
 
-        do{
+            //test
             for (Entry<Products, Integer> entry : buy.getItem().entrySet()) {
                 Products product = entry.getKey();
                 Integer quantity = entry.getValue();
 
                 checkNeedAdditionalProductForPromotion(promotionDiscountPolicy, product, quantity, buy, payment);
-
-                if (promotionDiscountPolicy.checkPromotionCondition(product, quantity)) {
-                    Integer currentStockList = stock.getPromotionStock().get(product);
-
-                    int availableCount = promotionDiscountPolicy.calculateDiscountCount(product, currentStockList);
-                    int expectedCount = promotionDiscountPolicy.calculateDiscountCount(product, quantity);
-                    int availableQuantity = promotionDiscountPolicy.calculateDiscountQuantity(product, currentStockList);
-                    int requireOriginalPriceQuantity = quantity - availableQuantity;
-
-                    if (expectedCount > availableCount) {
-                        boolean answer = inputView.requestApplyOutOfStockNoPromotion(product.getName(), requireOriginalPriceQuantity);
-                        if (answer) { // 정가 결제할게요
-                            processBuyNGetOneFreeDiscount(payment, product, currentStockList, buy, promotionDiscountPolicy);
-                        }
-                        // 취소해주세요
-                    }
-
-                    processBuyNGetOneFreeDiscount(payment, product, quantity, buy, promotionDiscountPolicy);
-                }
+                processApplyPromotionDiscount(promotionDiscountPolicy, product, quantity, stock, payment, buy);
             }
             processApplyMembershipDiscount(payment, buy);
-            wantToExtraPurchase = inputView.requestExtraPurchase();
-            if(wantToExtraPurchase){
-                Map<Products, Integer> additionalItems = processPurchaseItems(stock, payment).getItem();
-                buy.addBuyItem(additionalItems);
-            }
-        }while (wantToExtraPurchase);
-        outputView.printReceipt(buy.getItem(), buy.getFreeItem(), payment.integratePriceForReceipt());
-    }
+            outputView.printReceipt(buy.getItem(), buy.getFreeItem(), payment.integratePriceForReceipt());
+            stock.decreaseStock(buy.getItem());
+            //test
 
-    private void processApplyMembershipDiscount(Payment payment, Buy buy) {
-        boolean applyMembershipDiscount = inputView.requestApplyMembershipDiscount();
-        if (applyMembershipDiscount) {
-            payment.applyMembershipDiscount(buy, new MemberShipDiscountPolicy());
+            wantToExtraPurchase = inputView.requestExtraPurchase();
         }
     }
 
@@ -88,6 +63,43 @@ public class ConvenienceController {
         Buy buy = new Buy(stock, purchaseItem);
         buy.getItem().forEach(payment::incrementPriceForQuantity);
         return buy;
+    }
+
+    private void processApplyPromotionDiscount(PromotionDiscountPolicy promotionDiscountPolicy, Products product,
+                                               Integer quantity,
+                                               Stock stock, Payment payment, Buy buy) {
+        if (promotionDiscountPolicy.checkPromotionCondition(product, quantity)) {
+            int currentStock = stock.getPromotionStock().get(product);
+
+            int expectedCount = promotionDiscountPolicy.calculateDiscountCount(product, quantity);
+            int availableCount = promotionDiscountPolicy.calculateDiscountCount(product, currentStock);
+            int availableQuantity = promotionDiscountPolicy.calculateDiscountQuantity(product, currentStock);
+            int requireRegularPriceQuantity = quantity - availableQuantity;
+
+            boolean decideRegularPay = checkRequireRegularPriceDueToOutOfPromotionStock(expectedCount, availableCount, product,
+                    requireRegularPriceQuantity, payment,
+                    currentStock, buy,
+                    promotionDiscountPolicy);
+            if(!decideRegularPay) processBuyNGetOneFreeDiscount(payment, product, quantity, buy, promotionDiscountPolicy);
+        }
+    }
+
+    private boolean checkRequireRegularPriceDueToOutOfPromotionStock(int expectedCount, int availableCount,
+                                                                  Products product, int requireRegularPriceQuantity,
+                                                                  Payment payment, int currentStock, Buy buy,
+                                                                  PromotionDiscountPolicy promotionDiscountPolicy) {
+        if (expectedCount > availableCount) {
+            boolean answer = inputView.requestApplyOutOfStockNoPromotion(product.getName(),
+                    requireRegularPriceQuantity);
+            if (answer) { // 정가 결제할게요
+                processBuyNGetOneFreeDiscount(payment, product, currentStock, buy, promotionDiscountPolicy);
+                return true;
+            }
+            // 취소해주세요
+            buy.cancelBuy(product, requireRegularPriceQuantity);
+            payment.cancelPayment(product, requireRegularPriceQuantity);
+        }
+        return false;
     }
 
     private void processBuyNGetOneFreeDiscount(Payment payment, Products product, Integer quantity, Buy buy,
@@ -110,6 +122,13 @@ public class ConvenienceController {
         if (inputView.requestExtraQuantityForApplyPromotion(product.getName())) {
             buy.getOneItemFree(product);
             payment.incrementPromotionPriceForQuantity(product, 1);
+        }
+    }
+
+    private void processApplyMembershipDiscount(Payment payment, Buy buy) {
+        boolean applyMembershipDiscount = inputView.requestApplyMembershipDiscount();
+        if (applyMembershipDiscount) {
+            payment.applyMembershipDiscount(buy, new MemberShipDiscountPolicy());
         }
     }
 
@@ -157,7 +176,7 @@ public class ConvenienceController {
                 quantity = findQuantity(input);
                 products = findProducts(input);
                 for (int i = 0; i < products.size(); i++) {
-                    validateExceedQuantity(products.get(i), quantity.get(i), stock);
+                    stock.validateExceedQuantity(products.get(i), quantity.get(i));
                 }
                 valid = true;
             } catch (IllegalArgumentException e) {
@@ -170,19 +189,4 @@ public class ConvenienceController {
         return item;
     }
 
-    private void validateExceedQuantity(Products products, int quantity, Stock stock) {
-        Integer promotionStock = stock.getPromotionStock().get(products);
-        Integer noPromotionStock = stock.getNoPromotionStock().get(products);
-
-        if (Products.isPromotionProduct(products.getName()) && stock.getPromotionStock().get(products) < quantity) {
-            if (promotionStock + noPromotionStock < quantity) {
-                throw new IllegalArgumentException(ErrorMessage.EXCEED_QUANTITY_ERROR.getMessage());
-            }
-        }
-        if (!Products.isPromotionProduct(products.getName())) {
-            if (noPromotionStock < quantity) {
-                throw new IllegalArgumentException(ErrorMessage.EXCEED_QUANTITY_ERROR.getMessage());
-            }
-        }
-    }
 }
