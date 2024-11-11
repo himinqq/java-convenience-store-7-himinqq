@@ -1,7 +1,7 @@
 package store.view;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import store.domain.Products;
 import store.domain.Stock;
@@ -54,7 +54,7 @@ public class OutputView {
         return String.valueOf(stock) + "개";
     }
 
-    public void printReceipt(Map<Products, Integer> buyItem, Map<Products, Integer> freeItem, List<Integer> payment) {
+    public void printReceipt(Map<Products, Integer> buyItem, Map<Products, Integer> freeItem, ArrayList<Integer> payment) {
         StringBuilder receipt = new StringBuilder();
         receipt.append("===========W 편의점=============\n 상품명\t\t수량\t금액\n");
 

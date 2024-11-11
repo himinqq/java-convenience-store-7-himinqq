@@ -8,7 +8,7 @@ public class Buy {
     private final Map<Products, Integer> freeItem = new HashMap<>();
     private final Stock stock;
 
-    public Buy(Stock stock, Map<Products, Integer> item) {
+    public Buy(Stock stock,Map<Products, Integer> item) {
         this.stock = stock;
         this.item = item;
     }
@@ -23,12 +23,12 @@ public class Buy {
 
     public void getOneItemFree(Products products) {
         item.put(products, item.get(products) + 1);
-        freeItem.put(products, freeItem.getOrDefault(products, 0) + 1);
+        freeItem.put(products, freeItem.getOrDefault(products,0)+1);
         stock.decreasePromotionStock(products);
     }
 
-    public void addDisCountItem(Products products, int quantity) {
-        freeItem.put(products, freeItem.getOrDefault(products, 0) + quantity);
+    public void addDisCountItem(Products products,int quantity){
+        freeItem.put(products, freeItem.getOrDefault(products,0) + quantity);
     }
 
     public void addBuyItem(Map<Products, Integer> additionalItem) {

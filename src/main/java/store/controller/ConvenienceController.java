@@ -9,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import store.ErrorMessage;
 import store.domain.Buy;
+import store.domain.MemberShipDiscountPolicy;
 import store.domain.Payment;
 import store.domain.Products;
 import store.domain.PromotionDiscountPolicy;
@@ -43,6 +44,8 @@ public class ConvenienceController {
             Products product = entry.getKey();
             Integer quantity = entry.getValue();
 
+
+            //추가구매 여부 확인
             if (promotionDiscountPolicy.checkPromotionCondition(product, quantity) &&
                     promotionDiscountPolicy.needExtraQuantityForPromotion(product, quantity)) {
                 //하나 무료 증정
@@ -52,6 +55,7 @@ public class ConvenienceController {
                 }
             }
 
+            //프로모션 재고 확인 후 할인
             if (promotionDiscountPolicy.checkPromotionCondition(product, quantity)) {
                 Integer currentStockList = stock.getPromotionStock().get(product);
 
@@ -67,16 +71,20 @@ public class ConvenienceController {
                         payment.applyBuyNGetOneFreeDiscount(product, currentStockList);
                         buy.addDisCountItem(product,
                                 promotionDiscountPolicy.calculateDiscountCount(product, currentStockList));
-                        outputView.printReceipt(buy.getItem(), buy.getFreeItem(),
-                                payment.integratePriceForReceipt()); //!!!!!
-                        //return;
                     }
-                    //취소해주세요 로직!!!
+                    //취소해주세요
                 }
+
+                payment.applyBuyNGetOneFreeDiscount(product,quantity);
+                buy.addDisCountItem(product,
+                        promotionDiscountPolicy.calculateDiscountCount(product,quantity));
 
             }
         }
         boolean applyMembershipDiscount = inputView.requestApplyMembershipDiscount();
+        if(applyMembershipDiscount){
+            payment.applyMembershipDiscount(buy,new MemberShipDiscountPolicy());
+        }
         boolean extraPurchase = inputView.requestExtraPurchase();
 
         outputView.printReceipt(buy.getItem(), buy.getFreeItem(), payment.integratePriceForReceipt());

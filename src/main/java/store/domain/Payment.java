@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 public class Payment {
+    public static final int MEMBERSHIP_MAXIMUM_PRICE = 8000;
     private int price = 0;
     private int promotionPrice = 0;
     private int membershipPrice = 0;
@@ -52,8 +53,24 @@ public class Payment {
         subtractPrice(products.getPrice() * quantity);
     }
 
-    public List<Integer> integratePriceForReceipt() {
+    public ArrayList<Integer> integratePriceForReceipt() {
         return new ArrayList<>(List.of(promotionPrice, membershipPrice, price));
+    }
+
+    public void applyMembershipDiscount(Buy buy,MemberShipDiscountPolicy memberShipDiscountPolicy){
+        int promotionTotalPrice = buy.getItem().entrySet()
+                .stream().filter(i -> Products.isPromotionProduct(i.getKey().getName()))
+                .mapToInt(i -> i.getValue() * (i.getValue() * i.getKey().getPrice()))
+                .sum();
+
+        int discountAmount = memberShipDiscountPolicy.discountAmount(promotionTotalPrice, promotionPrice);
+
+        if(memberShipDiscountPolicy.isExceedMembershipDiscountLimit(discountAmount)){
+            membershipPrice = MEMBERSHIP_MAXIMUM_PRICE;
+            subtractPrice(MEMBERSHIP_MAXIMUM_PRICE);
+        }
+        membershipPrice = discountAmount;
+        subtractPrice(membershipPrice);
     }
 
 
