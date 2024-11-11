@@ -1,16 +1,14 @@
 package store.domain;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.IntStream;
 
 public class Buy {
     private Map<Products, Integer> item = new HashMap<>();
     private final Map<Products, Integer> freeItem = new HashMap<>();
     private final Stock stock;
 
-    public Buy(Stock stock,Map<Products, Integer> item) {
+    public Buy(Stock stock, Map<Products, Integer> item) {
         this.stock = stock;
         this.item = item;
     }
@@ -24,8 +22,13 @@ public class Buy {
     }
 
     public void getOneItemFree(Products products) {
-        freeItem.put(products, freeItem.get(products)+1);
+        item.put(products, item.get(products) + 1);
+        freeItem.put(products, freeItem.getOrDefault(products, 0) + 1);
         stock.decreasePromotionStock(products);
+    }
+
+    public void addDisCountItem(Products products, int quantity) {
+        freeItem.put(products, freeItem.getOrDefault(products, 0) + quantity);
     }
 
     public void addBuyItem(Map<Products, Integer> additionalItem) {

@@ -25,12 +25,21 @@ public class PromotionDiscountPolicy {
     }
 
     public boolean needExtraQuantityForPromotion(Products products, int quantity) {
-        return quantity % (requiredQuantity(products)+1) == requiredQuantity(products)
+        return quantity % (requiredQuantity(products) + 1) == requiredQuantity(products)
                 || requiredQuantity(products) == quantity;
     }
 
-    public int calculateDiscountAmount(Products products, int quantity) {
-        return quantity / (requiredQuantity(products) + 1);
+    public int calculateDiscountCount(Products products, int stock) {
+        return stock / discountUnit(products);
+    }
+
+    public int calculateDiscountQuantity(Products products, int stock) {
+        return (stock / discountUnit(products)) * discountUnit(products);
+    }
+
+
+    public int discountUnit(Products products) {
+        return requiredQuantity(products) + 1;
     }
 
 }

@@ -28,27 +28,6 @@ public class ConvenienceController {
         this.convenienceService = convenienceService;
     }
 
-//반복로직
-//    public void start() {
-//        outputView.printWelcome();
-//        Stock stock = new Stock();
-//        outputView.printStock(stock);
-//        PromotionDiscountPolicy promotionDiscountPolicy = new PromotionDiscountPolicy();
-//        Payment payment = new Payment(promotionDiscountPolicy);
-//
-//        boolean answer = true;
-//        HashMap<Products, Integer> purchaseItem = validatePurchaseItem(stock);
-//        Buy buy = new Buy(stock, purchaseItem);
-//        answer = inputView.requestExtraPurchase();
-//        while(answer){
-//            HashMap<Products, Integer> purchase = validatePurchaseItem(stock);
-//            buy.addBuyItem(purchase);
-//            buy.getItem().forEach(payment::incrementPriceForQuantity);
-//            outputView.printReceipt(buy.getItem(),buy.getFreeItem(),payment.integratePriceForReceipt());
-//            answer = inputView.requestExtraPurchase();
-//        }
-//    }
-
     public void start() {
         outputView.printWelcome();
         Stock stock = new Stock();
@@ -63,32 +42,42 @@ public class ConvenienceController {
         for (Entry<Products, Integer> entry : buy.getItem().entrySet()) {
             Products product = entry.getKey();
             Integer quantity = entry.getValue();
-            if (promotionDiscountPolicy.checkPromotionCondition(product, quantity)) {
-                payment.applyBuyNGetOneFreeDiscount(product, quantity);
-                if (promotionDiscountPolicy.needExtraQuantityForPromotion(product, quantity)) {
-                    if (inputView.requestExtraQuantityForApplyPromotion(product.getName())) {
-                        buy.getOneItemFree(product);
-                    }
+
+            if (promotionDiscountPolicy.checkPromotionCondition(product, quantity) &&
+                    promotionDiscountPolicy.needExtraQuantityForPromotion(product, quantity)) {
+                //하나 무료 증정
+                if (inputView.requestExtraQuantityForApplyPromotion(product.getName())) {
+                    buy.getOneItemFree(product);
+                    payment.incrementPromotionPriceForQuantity(product, 1);
                 }
             }
 
-            if (Products.isPromotionProduct(product.getName())) {
-                System.out.println();
-                int remainQuantityByOutOfStock = stock.decreasePromotionStockAndReturnRemaining(product, quantity);
-                if (remainQuantityByOutOfStock != 0) {
-                    boolean answer = inputView.requestApplyOutOfStockNoPromotion(Console.readLine(), quantity);
-                    if (answer) {
-                        stock.decreaseNoPromotionStock(product);
-                        payment.incrementPriceForQuantity(product, remainQuantityByOutOfStock);
-                        continue;
+            if (promotionDiscountPolicy.checkPromotionCondition(product, quantity)) {
+                Integer currentStockList = stock.getPromotionStock().get(product);
+
+                int availableCount = promotionDiscountPolicy.calculateDiscountCount(product, currentStockList);
+                int expectedCount = promotionDiscountPolicy.calculateDiscountCount(product, quantity);
+                int availableQuantity = promotionDiscountPolicy.calculateDiscountQuantity(product, currentStockList);
+                int requireOriginalPriceQuantity = quantity - availableQuantity;
+
+                if (expectedCount > availableCount) {
+                    boolean answer = inputView.requestApplyOutOfStockNoPromotion(product.getName(),
+                            requireOriginalPriceQuantity);
+                    if (answer) { //정가결제할게요
+                        payment.applyBuyNGetOneFreeDiscount(product, currentStockList);
+                        buy.addDisCountItem(product,
+                                promotionDiscountPolicy.calculateDiscountCount(product, currentStockList));
+                        outputView.printReceipt(buy.getItem(), buy.getFreeItem(),
+                                payment.integratePriceForReceipt()); //!!!!!
+                        //return;
                     }
-                    payment.cancelPayment(product, remainQuantityByOutOfStock);
-                    buy.cancelBuy(product, remainQuantityByOutOfStock);
+                    //취소해주세요 로직!!!
                 }
-                continue;
+
             }
-            stock.decreaseNoPromotionStock(product);
         }
+        boolean applyMembershipDiscount = inputView.requestApplyMembershipDiscount();
+        boolean extraPurchase = inputView.requestExtraPurchase();
 
         outputView.printReceipt(buy.getItem(), buy.getFreeItem(), payment.integratePriceForReceipt());
     }
@@ -151,41 +140,18 @@ public class ConvenienceController {
     }
 
     private void validateExceedQuantity(Products products, int quantity, Stock stock) {
-        if (Products.isPromotionProduct(products.getName())) {
-            stock.checkExceedQuantity(stock.getPromotionStock(), products, quantity);
-            return;
+        Integer promotionStock = stock.getPromotionStock().get(products);
+        Integer noPromotionStock = stock.getNoPromotionStock().get(products);
+
+        if (Products.isPromotionProduct(products.getName()) && stock.getPromotionStock().get(products) < quantity) {
+            if (promotionStock + noPromotionStock < quantity) {
+                throw new IllegalArgumentException(ErrorMessage.EXCEED_QUANTITY_ERROR.getMessage());
+            }
         }
-        stock.checkExceedQuantity(stock.getNoPromotionStock(), products, quantity);
+        if (!Products.isPromotionProduct(products.getName())) {
+            if (noPromotionStock < quantity) {
+                throw new IllegalArgumentException(ErrorMessage.EXCEED_QUANTITY_ERROR.getMessage());
+            }
+        }
     }
-
-    //계산 로직
-//    for (Entry<Products, Integer> entry : buy.getItem().entrySet()) {
-//        Products product = entry.getKey();
-//        Integer quantity = entry.getValue();
-//        if(promotionDiscountPolicy.checkPromotionCondition(product,quantity)){
-//            payment.applyBuyNGetOneFreeDiscount(product,quantity);
-//            if(promotionDiscountPolicy.needExtraQuantityForPromotion(product, quantity)){
-//                if(inputView.requestExtraQuantityForApplyPromotion(product.getName())){
-//                    buy.getOneItemFree(product);
-//                }
-//            }
-//        }
-//
-//        if(Products.isPromotionProduct(product.getName())){
-//            int remainQuantityByOutOfStock = stock.decreasePromotionStockAndReturnRemaining(product, quantity);
-//            if(remainQuantityByOutOfStock != 0){
-//                boolean answer = inputView.requestApplyOutOfStockNoPromotion(Console.readLine(), quantity);
-//                if(answer) {
-//                    stock.decreaseNoPromotionStock(product);
-//                    payment.incrementPriceForQuantity(product,remainQuantityByOutOfStock);
-//                    continue;
-//                }
-//                payment.cancelPayment(product,remainQuantityByOutOfStock);
-//                buy.cancelBuy(product,remainQuantityByOutOfStock);
-//            }
-//            continue;
-//        }
-//        stock.decreaseNoPromotionStock(product);
-//    }
-
 }

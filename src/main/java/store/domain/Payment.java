@@ -30,6 +30,11 @@ public class Payment {
         this.promotionPrice += price;
     }
 
+    public void incrementPromotionPriceForQuantity(Products products, int quantity) {
+        IntStream.range(0, quantity)
+                .forEach(i -> addPromotionPrice(products.getPrice()));
+    }
+
     public void incrementPriceForQuantity(Products products, int quantity) {
         IntStream.range(0, quantity)
                 .forEach(i -> addPrice(products.getPrice()));
@@ -37,18 +42,18 @@ public class Payment {
 
     public void applyBuyNGetOneFreeDiscount(Products products, int quantity) {
         if (promotionDiscountPolicy.requiredQuantity(products) != quantity) {
-            subtractPrice(products.getPrice() * promotionDiscountPolicy.calculateDiscountAmount(products, quantity));
+            subtractPrice(products.getPrice() * promotionDiscountPolicy.calculateDiscountCount(products, quantity));
             addPromotionPrice(
-                    products.getPrice() * promotionDiscountPolicy.calculateDiscountAmount(products, quantity));
+                    products.getPrice() * promotionDiscountPolicy.calculateDiscountCount(products, quantity));
         }
     }
 
-    public void cancelPayment(Products products, int quantity){
-        subtractPrice(products.getPrice()*quantity);
+    public void cancelPayment(Products products, int quantity) {
+        subtractPrice(products.getPrice() * quantity);
     }
 
-    public List<Integer> integratePriceForReceipt(){
-        return new ArrayList<>(List.of(promotionPrice,membershipPrice,price));
+    public List<Integer> integratePriceForReceipt() {
+        return new ArrayList<>(List.of(promotionPrice, membershipPrice, price));
     }
 
 

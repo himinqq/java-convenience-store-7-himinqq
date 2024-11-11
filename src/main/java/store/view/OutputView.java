@@ -55,28 +55,32 @@ public class OutputView {
     }
 
     public void printReceipt(Map<Products, Integer> buyItem, Map<Products, Integer> freeItem, List<Integer> payment) {
-        System.out.println("===========W 편의점=============\n 상품명\t\t수량\t금액");
+        StringBuilder receipt = new StringBuilder();
+        receipt.append("===========W 편의점=============\n 상품명\t\t수량\t금액\n");
+
         buyItem.entrySet().forEach(i -> {
-            System.out.println(
-                    String.format(BUY_ITEM_MESSAGE, i.getKey().getName(), i.getValue(), i.getValue()*i.getKey().getPrice()));
+            receipt.append(String.format(BUY_ITEM_MESSAGE, i.getKey().getName(), i.getValue(), i.getValue() * i.getKey().getPrice()))
+                    .append("\n");
         });
 
-        System.out.println("===========증\t정=============");
+        receipt.append("===========증\t정=============\n");
         freeItem.entrySet().forEach(i -> {
-            System.out.println(String.format(FREE_ITEM_MESSAGE, i.getKey().getName(), i.getValue()));
+            receipt.append(String.format(FREE_ITEM_MESSAGE, i.getKey().getName(), i.getValue()))
+                    .append("\n");
         });
 
-        System.out.println("==============================");
+        receipt.append("==============================\n");
 
         int totalQuantity = buyItem.entrySet().stream().mapToInt(i -> i.getValue()).sum();
         int totalPrice = buyItem.entrySet().stream().mapToInt(i -> i.getKey().getPrice() * i.getValue()).sum();
-        String total = String.format(TOTAL_PRICE_MESSAGE, totalQuantity, totalPrice);
-        String promotionDiscount = String.format(PROMOTION_DISCOUNT_MESSAGE, payment.get(0));
-        String membershipDiscount = String.format(MEMBERSHIP_DISCOUNT_MESSAGE, payment.get(1));
-        String mustPayment = String.format(MUST_PAYMENT, payment.get(2));
+        receipt.append(String.format(TOTAL_PRICE_MESSAGE, totalQuantity, totalPrice));
 
-        System.out.println(total + promotionDiscount + membershipDiscount + mustPayment);
+        receipt.append(String.format(PROMOTION_DISCOUNT_MESSAGE, payment.get(0)))
+                .append(String.format(MEMBERSHIP_DISCOUNT_MESSAGE, payment.get(1)))
+                .append(String.format(MUST_PAYMENT, payment.get(2)));
 
+        System.out.println(receipt);
     }
+
 
 }
