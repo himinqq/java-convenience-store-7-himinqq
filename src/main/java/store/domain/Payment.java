@@ -73,6 +73,7 @@ public class Payment {
             membershipPrice = MEMBERSHIP_MAXIMUM_PRICE;
             subtractPrice(MEMBERSHIP_MAXIMUM_PRICE);
         }
+
         membershipPrice = discountAmount;
         subtractPrice(membershipPrice);
     }

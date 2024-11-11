@@ -76,18 +76,21 @@ public class ConvenienceController {
             int availableQuantity = promotionDiscountPolicy.calculateDiscountQuantity(product, currentStock);
             int requireRegularPriceQuantity = quantity - availableQuantity;
 
-            boolean decideRegularPay = checkRequireRegularPriceDueToOutOfPromotionStock(expectedCount, availableCount, product,
+            boolean decideRegularPay = checkRequireRegularPriceDueToOutOfPromotionStock(expectedCount, availableCount,
+                    product,
                     requireRegularPriceQuantity, payment,
                     currentStock, buy,
                     promotionDiscountPolicy);
-            if(!decideRegularPay) processBuyNGetOneFreeDiscount(payment, product, quantity, buy, promotionDiscountPolicy);
+            if (!decideRegularPay) {
+                processBuyNGetOneFreeDiscount(payment, product, quantity, buy, promotionDiscountPolicy);
+            }
         }
     }
 
     private boolean checkRequireRegularPriceDueToOutOfPromotionStock(int expectedCount, int availableCount,
-                                                                  Products product, int requireRegularPriceQuantity,
-                                                                  Payment payment, int currentStock, Buy buy,
-                                                                  PromotionDiscountPolicy promotionDiscountPolicy) {
+                                                                     Products product, int requireRegularPriceQuantity,
+                                                                     Payment payment, int currentStock, Buy buy,
+                                                                     PromotionDiscountPolicy promotionDiscountPolicy) {
         if (expectedCount > availableCount) {
             boolean answer = inputView.requestApplyOutOfStockNoPromotion(product.getName(),
                     requireRegularPriceQuantity);
@@ -139,6 +142,7 @@ public class ConvenienceController {
 
         while (productNamematcher.find()) {
             String product = productNamematcher.group();
+            validateExistProduct(product);
             products.add(Products.findProduct(product));
         }
         return products;
@@ -189,4 +193,9 @@ public class ConvenienceController {
         return item;
     }
 
+    public void validateExistProduct(String input){
+        if(Products.findProduct(input).equals(Products.NOTHING)){
+            throw new IllegalArgumentException(ErrorMessage.NOT_EXIST_PRODUCT_ERROR.getMessage());
+        }
+    }
 }
