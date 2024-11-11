@@ -41,7 +41,6 @@ public class ConvenienceController {
             Payment payment = new Payment(promotionDiscountPolicy);
             Buy buy = processPurchaseItems(stock, payment);
 
-            //test
             for (Entry<Products, Integer> entry : buy.getItem().entrySet()) {
                 Products product = entry.getKey();
                 Integer quantity = entry.getValue();
@@ -52,7 +51,6 @@ public class ConvenienceController {
             processApplyMembershipDiscount(payment, buy);
             outputView.printReceipt(buy.getItem(), buy.getFreeItem(), payment.integratePriceForReceipt());
             stock.decreaseStock(buy.getItem());
-            //test
 
             wantToExtraPurchase = inputView.requestExtraPurchase();
         }
@@ -145,7 +143,14 @@ public class ConvenienceController {
             validateExistProduct(product);
             products.add(Products.findProduct(product));
         }
+        validateInput(products);
         return products;
+    }
+
+    private void validateInput(List<Products> products) {
+        if(products.isEmpty()){
+            throw new IllegalArgumentException(ErrorMessage.INVALID_INPUT_ERROR.getMessage());
+        }
     }
 
     private List<Integer> findQuantity(String clientInput) {
@@ -193,8 +198,8 @@ public class ConvenienceController {
         return item;
     }
 
-    public void validateExistProduct(String input){
-        if(Products.findProduct(input).equals(Products.NOTHING)){
+    public void validateExistProduct(String input) {
+        if (Products.findProduct(input).equals(Products.NOTHING)) {
             throw new IllegalArgumentException(ErrorMessage.NOT_EXIST_PRODUCT_ERROR.getMessage());
         }
     }
