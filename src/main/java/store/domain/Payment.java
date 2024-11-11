@@ -15,6 +15,10 @@ public class Payment {
         this.promotionDiscountPolicy = promotionDiscountPolicy;
     }
 
+    public int getMembershipPrice() {
+        return membershipPrice;
+    }
+
     public int getPrice() {
         return price;
     }

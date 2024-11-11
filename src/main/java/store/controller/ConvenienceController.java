@@ -1,9 +1,9 @@
 package store.controller;
 
-import camp.nextstep.edu.missionutils.Console;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,58 +36,81 @@ public class ConvenienceController {
         PromotionDiscountPolicy promotionDiscountPolicy = new PromotionDiscountPolicy();
         Payment payment = new Payment(promotionDiscountPolicy);
 
+        Buy buy = processPurchaseItems(stock, payment);
+
+        boolean wantToExtraPurchase;
+
+        do{
+            for (Entry<Products, Integer> entry : buy.getItem().entrySet()) {
+                Products product = entry.getKey();
+                Integer quantity = entry.getValue();
+
+                checkNeedAdditionalProductForPromotion(promotionDiscountPolicy, product, quantity, buy, payment);
+
+                if (promotionDiscountPolicy.checkPromotionCondition(product, quantity)) {
+                    Integer currentStockList = stock.getPromotionStock().get(product);
+
+                    int availableCount = promotionDiscountPolicy.calculateDiscountCount(product, currentStockList);
+                    int expectedCount = promotionDiscountPolicy.calculateDiscountCount(product, quantity);
+                    int availableQuantity = promotionDiscountPolicy.calculateDiscountQuantity(product, currentStockList);
+                    int requireOriginalPriceQuantity = quantity - availableQuantity;
+
+                    if (expectedCount > availableCount) {
+                        boolean answer = inputView.requestApplyOutOfStockNoPromotion(product.getName(), requireOriginalPriceQuantity);
+                        if (answer) { // 정가 결제할게요
+                            processBuyNGetOneFreeDiscount(payment, product, currentStockList, buy, promotionDiscountPolicy);
+                        }
+                        // 취소해주세요
+                    }
+
+                    processBuyNGetOneFreeDiscount(payment, product, quantity, buy, promotionDiscountPolicy);
+                }
+            }
+            processApplyMembershipDiscount(payment, buy);
+            wantToExtraPurchase = inputView.requestExtraPurchase();
+            if(wantToExtraPurchase){
+                Map<Products, Integer> additionalItems = processPurchaseItems(stock, payment).getItem();
+                buy.addBuyItem(additionalItems);
+            }
+        }while (wantToExtraPurchase);
+        outputView.printReceipt(buy.getItem(), buy.getFreeItem(), payment.integratePriceForReceipt());
+    }
+
+    private void processApplyMembershipDiscount(Payment payment, Buy buy) {
+        boolean applyMembershipDiscount = inputView.requestApplyMembershipDiscount();
+        if (applyMembershipDiscount) {
+            payment.applyMembershipDiscount(buy, new MemberShipDiscountPolicy());
+        }
+    }
+
+    private Buy processPurchaseItems(Stock stock, Payment payment) {
         HashMap<Products, Integer> purchaseItem = validatePurchaseItem(stock);
         Buy buy = new Buy(stock, purchaseItem);
         buy.getItem().forEach(payment::incrementPriceForQuantity);
+        return buy;
+    }
 
-        for (Entry<Products, Integer> entry : buy.getItem().entrySet()) {
-            Products product = entry.getKey();
-            Integer quantity = entry.getValue();
+    private void processBuyNGetOneFreeDiscount(Payment payment, Products product, Integer quantity, Buy buy,
+                                               PromotionDiscountPolicy promotionDiscountPolicy) {
+        payment.applyBuyNGetOneFreeDiscount(product, quantity);
+        buy.addDisCountItem(product,
+                promotionDiscountPolicy.calculateDiscountCount(product, quantity));
+    }
 
-
-            //추가구매 여부 확인
-            if (promotionDiscountPolicy.checkPromotionCondition(product, quantity) &&
-                    promotionDiscountPolicy.needExtraQuantityForPromotion(product, quantity)) {
-                //하나 무료 증정
-                if (inputView.requestExtraQuantityForApplyPromotion(product.getName())) {
-                    buy.getOneItemFree(product);
-                    payment.incrementPromotionPriceForQuantity(product, 1);
-                }
-            }
-
-            //프로모션 재고 확인 후 할인
-            if (promotionDiscountPolicy.checkPromotionCondition(product, quantity)) {
-                Integer currentStockList = stock.getPromotionStock().get(product);
-
-                int availableCount = promotionDiscountPolicy.calculateDiscountCount(product, currentStockList);
-                int expectedCount = promotionDiscountPolicy.calculateDiscountCount(product, quantity);
-                int availableQuantity = promotionDiscountPolicy.calculateDiscountQuantity(product, currentStockList);
-                int requireOriginalPriceQuantity = quantity - availableQuantity;
-
-                if (expectedCount > availableCount) {
-                    boolean answer = inputView.requestApplyOutOfStockNoPromotion(product.getName(),
-                            requireOriginalPriceQuantity);
-                    if (answer) { //정가결제할게요
-                        payment.applyBuyNGetOneFreeDiscount(product, currentStockList);
-                        buy.addDisCountItem(product,
-                                promotionDiscountPolicy.calculateDiscountCount(product, currentStockList));
-                    }
-                    //취소해주세요
-                }
-
-                payment.applyBuyNGetOneFreeDiscount(product,quantity);
-                buy.addDisCountItem(product,
-                        promotionDiscountPolicy.calculateDiscountCount(product,quantity));
-
-            }
+    private void checkNeedAdditionalProductForPromotion(PromotionDiscountPolicy promotionDiscountPolicy,
+                                                        Products product, Integer quantity, Buy buy,
+                                                        Payment payment) {
+        if (promotionDiscountPolicy.checkPromotionCondition(product, quantity) &&
+                promotionDiscountPolicy.needExtraQuantityForPromotion(product, quantity)) {
+            processAdditionalProductForPromotion(product, buy, payment);
         }
-        boolean applyMembershipDiscount = inputView.requestApplyMembershipDiscount();
-        if(applyMembershipDiscount){
-            payment.applyMembershipDiscount(buy,new MemberShipDiscountPolicy());
-        }
-        boolean extraPurchase = inputView.requestExtraPurchase();
+    }
 
-        outputView.printReceipt(buy.getItem(), buy.getFreeItem(), payment.integratePriceForReceipt());
+    private void processAdditionalProductForPromotion(Products product, Buy buy, Payment payment) {
+        if (inputView.requestExtraQuantityForApplyPromotion(product.getName())) {
+            buy.getOneItemFree(product);
+            payment.incrementPromotionPriceForQuantity(product, 1);
+        }
     }
 
     public List<Products> findProducts(String clientInput) {
